@@ -1,17 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Harry Potter Elf Game</title>
+    <title>Platformer Game</title>
     <style>
-        #gameCanvas {
+        canvas {
+            display: none;
             border: 1px solid black;
+        }
+        #gameCanvas {
             background-color: #f0f0f0;
+        }
+        .menu {
+            display: none;
+            text-align: center;
+        }
+        .show {
+            display: block;
+        }
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .level {
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            border: 1px solid black;
+            margin: 0 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
+    <div id="mainMenu" class="menu show">
+        <h1>Welcome to the Platformer Game</h1>
+        <div>
+            <h2>Instructions</h2>
+            <p>Use arrow keys or WASD to move and jump. Avoid enemies and collect all items to win.</p>
+        </div>
+
+        <h2>Levels</h2>
+        <div class="level-selector">
+            <div class="level" onclick="startLevel(1)">1</div>
+            <div class="level" onclick="startLevel(2)">2</div>
+            <div class="level" onclick="startLevel(3)">3</div>
+        </div>
+    </div>
+
     <canvas id="gameCanvas" width="1200" height="600"></canvas>
 
     <script src="game.js"></script>
 </body>
+
+
+
+<div id="gameOverMenu" class="menu">
+    <h2>Game Over</h2>
+    <button onclick="restartLevel()">Restart</button>
+    <button onclick="showMainMenu()">Main Menu</button>
+</div>
 </html>
