@@ -19,11 +19,25 @@ const player = {
 
 // Platforms properties
 const platforms = [
-    { x: 0, y: 350, width: canvas.width, height: 20, color: 'green' },
-    { x: -10, y: 0, width: 10, height: canvas.height, color: 'green' }, // Left barrier
-    { x: canvas.width, y: 0, width: 10, height: canvas.height, color: 'green' }, // Right barrier
-    // Add more visible platforms as needed
+    // Ground floor
+    { x: 0, y: 550, width: canvas.width, height: 20, color: 'saddlebrown' },
+
+    // Second floor
+    { x: 300, y: 350, width: 600, height: 20, color: 'grey' },
+
+    // Stairs (Example of three steps)
+    { x: 100, y: 500, width: 100, height: 20, color: 'peru' },
+    { x: 150, y: 450, width: 100, height: 20, color: 'peru' },
+    { x: 200, y: 400, width: 100, height: 20, color: 'peru' },
+
+    // Furniture (Example of a table)
+    //{ x: 50, y: 300, width: 150, height: 20, color: 'sienna' },
+
+    // Invisible barriers
+    { x: -10, y: 0, width: 10, height: canvas.height, color: '' },
+    { x: canvas.width, y: 0, width: 10, height: canvas.height, color: '' },
 ];
+
 
 function drawPlayer() {
     ctx.fillStyle = player.color;
@@ -43,59 +57,76 @@ function update() {
     player.velocityY += gravity;
     player.velocityX *= friction;
 
-    // Player movement
+    // Process left and right movement
     if (keys.right.pressed && !keys.left.pressed) {
         player.velocityX = player.speed;
     } else if (keys.left.pressed && !keys.right.pressed) {
         player.velocityX = -player.speed;
     } else {
-        // If both or neither are pressed, don't move horizontally
         player.velocityX = 0;
     }
 
-    // Update player position
-    player.x += player.velocityX;
-    player.y += player.velocityY;
+    // Calculate the next position
+    let nextX = player.x + player.velocityX;
+    let nextY = player.y + player.velocityY;
 
-    // Collision detection for each platform
-    player.jumping = true; // Assume player is falling until collision detected
+    // Assume player is falling until collision detected
+    player.jumping = true;
+
+    // Check for collision before updating player's position
     platforms.forEach(platform => {
-        // Vertical collision
+        // Vertical collision from the top
         if (
-            player.y + player.height + player.velocityY >= platform.y &&
-            player.y < platform.y &&
-            player.x + player.width > platform.x &&
-            player.x < platform.x + platform.width
+            nextY + player.height > platform.y && 
+            player.y + player.height <= platform.y &&
+            nextX + player.width > platform.x && 
+            nextX < platform.x + platform.width
         ) {
             player.velocityY = 0;
             player.jumping = false;
-            player.y = platform.y - player.height;
+            nextY = platform.y - player.height;
+        }
+
+        // Vertical collision from the bottom
+        if (
+            nextY < platform.y + platform.height && 
+            player.y >= platform.y + platform.height &&
+            nextX + player.width > platform.x && 
+            nextX < platform.x + platform.width
+        ) {
+            player.velocityY = 0;
+            nextY = player.y; // Keep the player at the current position
         }
 
         // Horizontal collision
         if (
-            player.y + player.height > platform.y &&
-            player.y < platform.y + platform.height
+            nextY + player.height > platform.y && 
+            nextY < platform.y + platform.height
         ) {
-            if (player.x + player.width > platform.x &&
-                player.x < platform.x + platform.width) {
-                if (player.velocityX > 0) { // Moving right
-                    player.velocityX = 0;
-                    player.x = platform.x - player.width;
-                }
-            } 
-            if (player.x < platform.x + platform.width &&
-                player.x + player.width > platform.x) {
-                if (player.velocityX < 0) { // Moving left
-                    player.velocityX = 0;
-                    player.x = platform.x + platform.width;
-                }
+            if (
+                nextX + player.width > platform.x && 
+                player.x + player.width <= platform.x
+            ) {
+                player.velocityX = 0;
+                nextX = platform.x - player.width;
+            }
+            if (
+                nextX < platform.x + platform.width && 
+                player.x >= platform.x + platform.width
+            ) {
+                player.velocityX = 0;
+                nextX = platform.x + platform.width;
             }
         }
     });
 
+    // Update player's position
+    player.x = nextX;
+    player.y = nextY;
+
     drawPlayer();
     platforms.forEach(drawPlatform);
+
     requestAnimationFrame(update);
 }
 
