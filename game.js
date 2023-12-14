@@ -41,23 +41,44 @@ function drawCollectible(collectible) {
     }
 }
 
+function angleBetweenVectors(v1, v2) {
+    const dot = v1.x * v2.x + v1.y * v2.y;
+    const magnitude1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+    const magnitude2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+    return Math.acos(dot / (magnitude1 * magnitude2));
+}
+
+
+
 function drawEnemy(enemy) {
     ctx.fillStyle = enemy.color;
     ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
 
+    // Define the vision cone angle (22.5 degrees in radians)
+    const visionConeAngle = Math.PI / 8; 
+
     ctx.beginPath();
     ctx.moveTo(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+
     if (enemy.velocityX > 0) {
-        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange, enemy.y - enemy.visionRange);
-        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange, enemy.y + enemy.height + enemy.visionRange);
+        // Right-facing vision cone
+        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange * Math.cos(-visionConeAngle), 
+                   enemy.y + enemy.height / 2 + enemy.visionRange * Math.sin(-visionConeAngle));
+        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange * Math.cos(visionConeAngle), 
+                   enemy.y + enemy.height / 2 + enemy.visionRange * Math.sin(visionConeAngle));
     } else {
-        ctx.lineTo(enemy.x + enemy.width / 2 - enemy.visionRange, enemy.y - enemy.visionRange);
-        ctx.lineTo(enemy.x + enemy.width / 2 - enemy.visionRange, enemy.y + enemy.height + enemy.visionRange);
+        // Left-facing vision cone
+        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange * Math.cos(Math.PI + visionConeAngle), 
+                   enemy.y + enemy.height / 2 + enemy.visionRange * Math.sin(Math.PI + visionConeAngle));
+        ctx.lineTo(enemy.x + enemy.width / 2 + enemy.visionRange * Math.cos(Math.PI - visionConeAngle), 
+                   enemy.y + enemy.height / 2 + enemy.visionRange * Math.sin(Math.PI - visionConeAngle));
     }
+
     ctx.closePath();
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
     ctx.fill();
 }
+
 
 let gameRunning = true;
 
@@ -91,12 +112,24 @@ function updateEnemy(enemy) {
         enemy.velocityX *= -1;
     }
     drawEnemy(enemy);
-    if (player.x > enemy.x && player.x < enemy.x + enemy.visionRange && 
-        player.y > enemy.y - enemy.visionRange && player.y < enemy.y + enemy.height + enemy.visionRange) {
+
+    // Create direction vector based on the enemy's current direction
+    const directionVector = { x: enemy.velocityX > 0 ? 1 : -1, y: 0 };
+
+    // Vector from enemy to player
+    const toPlayerVector = { x: player.x - enemy.x, y: player.y - enemy.y };
+
+    // Calculate the angle between the direction vector and toPlayerVector
+    const angle = angleBetweenVectors(directionVector, toPlayerVector);
+
+    // Check if player is within vision cone (45 degrees total) and within vision range
+    if (angle < Math.PI / 8 && Math.hypot(toPlayerVector.x, toPlayerVector.y) < enemy.visionRange) {
         showGameOverMenu();
         console.log("Player Detected! Game Over!");
     }
 }
+
+
 
 function resetGameState(level) {
     // Clear existing game state
@@ -126,8 +159,8 @@ function resetGameState(level) {
             // Add other platforms as needed
         );
         collectibles.push({ x: 150, y: 320, width: 10, height: 10, color: 'gold', collected: false });
-        enemies.push({ x: 200, y: 520, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 100, startX: 0, endX: canvas.width },
-                     { x: 300, y: 320, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 100, startX: 0, endX: 500 });
+        enemies.push({ x: 200, y: 520, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: canvas.width },
+                     { x: 300, y: 320, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: 500 });
     } else if (level === 2) {
         // Level 2 setup
         platforms.push(
