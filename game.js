@@ -4,6 +4,26 @@ const ctx = canvas.getContext('2d');
 const gravity = 0.1;
 const friction = 0.5;
 
+
+let playerImage;
+let enemyImage1;
+let enemyImage2;
+
+Promise.all([
+    loadImage('images/wizard.png'),
+    loadImage('images/Snape.png'),
+    loadImage('images/HouseElf.png')
+]).then(images => {
+    [playerImage, enemyImage1, enemyImage2] = images;
+    startGame(); // Start your game after images are loaded
+}).catch(error => {
+    console.error("Error loading images", error);
+});
+
+
+
+
+
 // Player properties
 const player = {
     x: 100,
@@ -24,9 +44,22 @@ let collectibles = [];
 let enemies = [];
 let currentLevel = 1;
 
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+
+
+
 function drawPlayer() {
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    if (playerImage) {
+        ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+    }
 }
 
 function drawPlatform(platform) {
@@ -51,8 +84,11 @@ function angleBetweenVectors(v1, v2) {
 
 
 function drawEnemy(enemy) {
-    ctx.fillStyle = enemy.color;
-    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+    const enemyImage = enemy.type === 'type1' ? enemyImage1 : enemyImage2;
+
+    if (enemyImage) {
+        ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+    }
 
     // Define the vision cone angle (22.5 degrees in radians)
     const visionConeAngle = Math.PI / 8; 
@@ -81,6 +117,11 @@ function drawEnemy(enemy) {
 
 
 let gameRunning = true;
+
+
+
+
+
 
 function showGameOverMenu() {
     document.getElementById("gameOverMenu").classList.add("show");
@@ -159,8 +200,8 @@ function resetGameState(level) {
             // Add other platforms as needed
         );
         collectibles.push({ x: 150, y: 320, width: 10, height: 10, color: 'gold', collected: false });
-        enemies.push({ x: 200, y: 520, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: canvas.width },
-                     { x: 300, y: 320, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: 500 });
+        enemies.push({ x: 200, y: 520, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: canvas.width, type:'type1'},
+                     { x: 300, y: 320, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 100, startX: 0, endX: 450, type:'type2'});
     } else if (level === 2) {
         // Level 2 setup
         platforms.push(
