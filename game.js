@@ -3,19 +3,21 @@ const ctx = canvas.getContext('2d');
 
 const gravity = 0.1;
 const friction = 0.5;
-
+let collectedSocks = 0;
 
 let playerImage;
 let enemyImage1;
 let enemyImage2;
 
+
 Promise.all([
     loadImage('images/wizard.png'),
     loadImage('images/Snape.png'),
-    loadImage('images/HouseElf.png')
+    loadImage('images/HouseElf.png'),
+    loadImage('images/sock.png')
 ]).then(images => {
-    [playerImage, enemyImage1, enemyImage2] = images;
-    startGame(); // Start your game after images are loaded
+    [playerImage, enemyImage1, enemyImage2, sock] = images;
+     // Start your game after images are loaded
 }).catch(error => {
     console.error("Error loading images", error);
 });
@@ -67,12 +69,24 @@ function drawPlatform(platform) {
     ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
 }
 
-function drawCollectible(collectible) {
-    if (!collectible.collected) {
-        ctx.fillStyle = collectible.color;
-        ctx.fillRect(collectible.x, collectible.y, collectible.width, collectible.height);
+
+function checkWinCondition() {
+    if (collectedSocks === collectibles.length) {
+        //alert("You Win!");
+        showMainMenu();
+        document.getElementById(`level${currentLevel}`).style.backgroundColor = 'green';
+        collectedSocks = 0; // Reset for next game
     }
 }
+
+
+function drawCollectible(collectible) {
+    if (!collectible.collected && sock) {
+        ctx.drawImage(sock, collectible.x, collectible.y, collectible.width, collectible.height);
+    }
+}
+
+
 
 function angleBetweenVectors(v1, v2) {
     const dot = v1.x * v2.x + v1.y * v2.y;
@@ -177,6 +191,8 @@ function resetGameState(level) {
     platforms = [];
     collectibles = [];
     enemies = [];
+    collectedSocks = 0;
+
 
     // General player setup for all levels
     player.x = 100;
@@ -199,52 +215,53 @@ function resetGameState(level) {
             { x: 700, y: 250, width: 200, height: 20, color: 'peru' },
             // Add other platforms as needed
         );
-        collectibles.push({ x: 150, y: 320, width: 10, height: 10, color: 'gold', collected: false });
+        collectibles.push({ x: 150, y: 320, width: 30, height: 30, color: 'gold', collected: false },
+                          { x: 1000, y: 120, width: 30, height: 30, color: 'gold', collected: false });
         enemies.push({ x: 200, y: 520, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 200, startX: 0, endX: canvas.width, type:'type1'},
                      { x: 300, y: 320, width: 30, height: 30, color: 'red', velocityX: 1, visionRange: 100, startX: 0, endX: 450, type:'type2'});
-    } else if (level === 2) {
-        // Level 2 setup
-        platforms.push(
-            // More and smaller platforms
-            { x: 100, y: 500, width: 300, height: 20, color: 'grey' },
+    } else // Level 2 setup
+    if (level === 2) {
+        platforms = [
+            // Ground platform
+            { x: 0, y: 550, width: canvas.width, height: 20, color: 'saddlebrown' },
+            // Elevated static platforms
+            { x: 200, y: 450, width: 150, height: 20, color: 'grey' },
             { x: 500, y: 400, width: 200, height: 20, color: 'grey' },
-            { x: 800, y: 300, width: 150, height: 20, color: 'grey' },
-            // Moving platform
-            { x: 200, y: 200, width: 100, height: 20, color: 'peru', isMoving: true, moveDirection: 'horizontal', moveRange: [200, 400] }
-            // ... Add more as needed
-        );
-        collectibles.push(
-            // Collectibles in challenging locations
-            { x: 350, y: 380, width: 10, height: 10, color: 'silver', collected: false },
-            { x: 850, y: 280, width: 10, height: 10, color: 'silver', collected: false }
-            // ... Add more as needed
-        );
-        enemies.push(
-            // Faster and more enemies
-            { x: 100, y: 480, width: 30, height: 30, color: 'green', velocityX: 1.5, visionRange: 150, startX: 100, endX: 400 },
-            // ... Add more as needed
-        );
+            { x: 800, y: 450, width: 150, height: 20, color: 'grey' },
+            { x: 250, y: 300, width: 150, height: 20, color: 'peru' }
+        ];
+        collectibles = [
+            // Hard to reach collectibles
+            { x: 250, y: 270, width: 30, height: 30, color: 'silver', collected: false },
+            { x: 1100, y: 500, width: 30, height: 30, color: 'silver', collected: false }
+        ];
+        enemies = [
+            // Faster moving enemies
+            { x: 600, y: 520, width: 30, height: 30, color: 'red', velocityX: 2, visionRange: 200, startX: 500, endX: 750, type: 'type1' },
+            { x: 800, y: 420, width: 30, height: 30, color: 'red', velocityX: .5, visionRange: 100, startX: 800, endX: 950, type: 'type2' }
+        ];
+    
     } else if (level === 3) {
-        // Level 3 setup
-        platforms.push(
-            // Complex platform arrangements
-            { x: 50, y: 450, width: 250, height: 20, color: 'brown' },
-            { x: 400, y: 350, width: 100, height: 20, color: 'brown' },
-            // Disappearing platform
-            { x: 600, y: 250, width: 120, height: 20, color: 'peru', isDisappearing: true, disappearTime: 3000 }
-            // ... Add more as needed
-        );
-        collectibles.push(
-            // Hard-to-reach collectibles
-            { x: 450, y: 330, width: 10, height: 10, color: 'bronze', collected: false },
-            { x: 650, y: 230, width: 10, height: 10, color: 'bronze', collected: false }
-            // ... Add more as needed
-        );
-        enemies.push(
-            // Challenging enemies
-            { x: 60, y: 430, width: 30, height: 30, color: 'purple', velocityX: 2, visionRange: 200, startX: 50, endX: 300 },
-            // ... Add more as needed
-        );
+        platforms = [
+            // Ground platform
+            { x: 0, y: 550, width: canvas.width, height: 20, color: 'saddlebrown' },
+            // Combination of different platforms
+            { x: 100, y: 450, width: 200, height: 20, color: 'grey' },
+            { x: 300, y: 350, width: 150, height: 20, color: 'peru', isMoving: true, moveDirection: 'horizontal', moveRange: [300, 450] },
+            { x: 550, y: 300, width: 150, height: 20, color: 'peru', },
+            { x: 750, y: 250, width: 150, height: 20, color: 'peru', },
+            { x: 600, y: 160, width: 100, height: 20, color: 'grey', },
+        ];
+        collectibles = [
+            // More collectibles in challenging spots
+            { x: 700, y: 520, width: 30, height: 30, color: 'bronze', collected: false },
+            { x: 620, y: 130, width: 30, height: 30, color: 'bronze', collected: false }
+        ];
+        enemies = [
+            // Mix of slow and fast enemies
+            { x: 200, y: 520, width: 30, height: 30, color: 'purple', velocityX: 2, visionRange: 200, startX: 100, endX: 1000, type: 'type1' },
+            { x: 750, y: 220, width: 30, height: 30, color: 'green', velocityX: 1.5, visionRange: 100, startX: 750, endX: 900, type: 'type2' }
+        ];
     }
 }
 
@@ -327,11 +344,21 @@ function update() {
             nextY < collectible.y + collectible.height &&
             nextY + player.height > collectible.y) {
             collectible.collected = true;
-            // Add score or trigger event
+            collectedSocks++;
+            
+            checkWinCondition(); // Moved up to ensure it is checked immediately after collection
         }
+        
     });
 
     enemies.forEach(updateEnemy);
+
+    
+
+    collectibles.forEach(drawCollectible);
+
+    console.log(collectedSocks, collectibles.length)
+    
 
     player.x = nextX;
     player.y = nextY;
